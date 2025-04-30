@@ -15,7 +15,9 @@ If you're excited about the idea of AI sidekicks for your browser and beyond...
 
 ## 🧪 Watch the Figma Demo
 
-[![Watch the demo](https://img.youtube.com/vi/LS9C48c9mm8/0.jpg)](https://www.youtube.com/watch?v=LS9C48c9mm8)
+<a href="https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID">
+  <img src="assets/figma-thumbnail.png" alt="Watch the demo" width="600"/>
+</a>
 
 ## 📢 Coming Soon
 
