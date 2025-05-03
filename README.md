@@ -22,7 +22,7 @@ Each key milestone gets updated daily with a visual indicator of progress:
 
 | Task                             | Status          |
 | -------------------------------- | --------------- |
-| 🧩 Local API Keys Refactoring    | ██░░░░░░░░░ 20% |
+| 🧩 Local API Keys Refactoring    | ██████░░░░░ 60% |
 | 🔐 Lower Browser Permissions     | ░░░░░░░░░░░ 0%  |
 | ⚡ Reduce Latency                | ░░░░░░░░░░░ 0%  |
 | 🎯 Improve Quality & Evaluations | ░░░░░░░░░░░ 0%  |
