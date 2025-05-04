@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/OmerHefets/opensidekick?style=social)](https://github.com/OmerHefets/opensidekick/stargazers)
 
-> ### 📅 Last Updated: **May 2, 2025**
+> ### 📅 Last Updated: **May 4, 2025**
 
 ## OpenSidekick 🤖
 
@@ -15,19 +15,19 @@ If you're excited about the idea of AI sidekicks for your browser and beyond...
 
 👉 **Star this repo** ⭐ to get notified about upcoming updates, full code release, and documentation.
 
-## 📅 Progress Tracker: May 2, 2025
+## 📅 Progress Tracker: May 4, 2025
 
 Stay in the loop as we build the foundations of OpenSidekick.  
 Each key milestone gets updated daily with a visual indicator of progress:
 
-| Task                             | Status          |
-| -------------------------------- | --------------- |
-| 🧩 Local API Keys Refactoring    | ██████░░░░░ 60% |
-| 🔐 Lower Browser Permissions     | ░░░░░░░░░░░ 0%  |
-| ⚡ Reduce Latency                | ░░░░░░░░░░░ 0%  |
-| 🎯 Improve Quality & Evaluations | ░░░░░░░░░░░ 0%  |
-| 🪄 Responsive Sidekick Banner    | ░░░░░░░░░░░ 0%  |
-| 🚀 **Launch!**                   |                 |
+| Task                             | Status           |
+| -------------------------------- | ---------------- |
+| ✅ Local API Keys Refactoring    | ███████████ 100% |
+| 🔐 Lower Browser Permissions     | █░░░░░░░░░░ 10%  |
+| ⚡ Reduce Latency                | ░░░░░░░░░░░ 0%   |
+| 🎯 Improve Quality & Evaluations | ░░░░░░░░░░░ 0%   |
+| 🪄 Responsive Sidekick Banner    | ░░░░░░░░░░░ 0%   |
+| 🚀 **Launch!**                   |                  |
 
 > A task will be marked with a ✅ once complete.
 
