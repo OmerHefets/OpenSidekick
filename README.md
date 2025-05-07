@@ -1,9 +1,11 @@
 # Adam & Eve – Your OpenSidekicks 🧑‍💻👩‍💻
 
+# 🎯 Launch Goal: May 8-9, 2025
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/OmerHefets/opensidekick?style=social)](https://github.com/OmerHefets/opensidekick/stargazers)
 
-> ### 📅 Last Updated: **May 6, 2025**
+> ### 📅 Last Updated: **May 7, 2025**
 
 ## OpenSidekick 🤖
 
@@ -15,7 +17,7 @@ If you're excited about the idea of AI sidekicks for your browser and beyond...
 
 👉 **Star this repo** ⭐ to get notified about upcoming updates, full code release, and documentation.
 
-## 📅 Progress Tracker: May 6, 2025
+## 📅 Progress Tracker: May 7, 2025
 
 Stay in the loop as we build the foundations of OpenSidekick.  
 Each key milestone gets updated daily with a visual indicator of progress:
@@ -23,10 +25,10 @@ Each key milestone gets updated daily with a visual indicator of progress:
 | Task                             | Status           |
 | -------------------------------- | ---------------- |
 | ✅ Local API Keys Refactoring    | ███████████ 100% |
-| 🔐 Lower Browser Permissions     | ███████████ 100% |
-| ⚡ Reduce Latency                | ███░░░░░░░░ 30%  |
-| 🎯 Improve Quality & Evaluations | ░░░░░░░░░░░ 0%   |
-| 🪄 Responsive Sidekick Banner    | ░░░░░░░░░░░ 0%   |
+| ✅ Lower Browser Permissions     | ███████████ 100% |
+| ✅ Reduce Latency                | ███████████ 100% |
+| 🎯 Improve Quality & Evaluations | ███░░░░░░░░ 30%  |
+| 🪄 Responsive Sidekick Banner    | ██████░░░░░ 60%  |
 | 🚀 **Launch!**                   |                  |
 
 > A task will be marked with a ✅ once complete.
