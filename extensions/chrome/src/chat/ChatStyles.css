@@ -1,0 +1,227 @@
+.user-message {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+.user-message .message-bubble {
+    background-color: #f0f0f0;
+    color: #000;
+    border-radius: 18px;
+    padding: 10px 14px;
+    max-width: 70%;
+    word-wrap: break-word;
+    font-size: 15.5px;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.sidekick-message {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+}
+
+.sidekick-message .message-content {
+    color: #000;
+    padding: 0 14px;
+    width: 100%;
+    word-wrap: break-word;
+    font-size: 15.5px;
+    line-height: 1.4;
+}
+
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from,
+    to {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+.user-message .message-bubble,
+.action-message .sidekick-message .message-content {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+}
+
+.action-message {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+}
+
+.action-message .action-bubble {
+    color: #3c3c3c;
+    border-radius: 18px;
+    padding: 6px 14px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 16.5px;
+    line-height: 1.4;
+}
+
+/* Animation for action messages */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.action-message {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.circular-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.circular-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.circular-button:disabled {
+    cursor: not-allowed;
+}
+
+.reject-button {
+    background-color: #b80000;
+    color: white;
+}
+
+.reject-button:not(:disabled):hover {
+    background-color: #cf0000;
+}
+
+.approve-button {
+    background-color: #015700;
+    color: white;
+}
+
+.approve-button:not(:disabled):hover {
+    background-color: #027200;
+}
+
+.circular-button.disabled {
+    background-color: #b1b1b1;
+    color: white;
+}
+
+.circular-button.disabled:hover {
+    background-color: #b1b1b1;
+}
+
+.svg-icon-nflayerCheck,
+.svg-icon-xmark {
+    transform: scale(0.75);
+}
+
+.action-status {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.action-status.approved {
+    color: #487057;
+}
+
+.action-status.rejected {
+    color: #835954;
+}
+
+.copilot-wait-message {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.copilot-wait-message .wait-bubble {
+    display: flex;
+    align-items: center;
+    background-color: #f5f5f538;
+    border-radius: 16px;
+    padding: 10px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copilot-wait-message .wait-indicator {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top: 2px solid #666;
+    border-radius: 50%;
+    margin-right: 10px;
+    animation: spin 1.5s linear infinite;
+}
+
+.copilot-wait-message .wait-text {
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.copilot-done-message {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.copilot-done-message .done-bubble {
+    display: flex;
+    align-items: center;
+    background-color: #e6f7e6;
+    border-radius: 16px;
+    padding: 10px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copilot-done-message .done-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.copilot-done-message .done-text {
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}

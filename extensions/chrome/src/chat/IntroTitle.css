@@ -1,0 +1,20 @@
+.intro-title {
+    text-align: center;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+}
+
+.intro-title h1 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+/* Make sure the intro title doesn't overlap with other content */
+.chat-app:not(.chat-initialized) .messages-container {
+    margin-bottom: 170px;
+}

@@ -1,0 +1,56 @@
+.copilot-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(255, 0, 0, 0.8);
+    border: 3px solid red;
+    z-index: 9999;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: marker-bounce 1s infinite;
+}
+
+.ripple-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid red;
+    border-radius: 50%;
+    animation: ripple 2s infinite ease-out;
+    opacity: 0;
+}
+
+.delay-1 {
+    animation-delay: 0.5s;
+}
+
+.delay-2 {
+    animation-delay: 1s;
+}
+
+@keyframes ripple {
+    0% {
+        width: 20px;
+        height: 20px;
+        opacity: 0.8;
+    }
+    100% {
+        width: 80px;
+        height: 80px;
+        opacity: 0;
+    }
+}
+
+@keyframes marker-bounce {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+}

@@ -1,0 +1,36 @@
+.loader {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.loader-text {
+    font-weight: 500;
+    font-size: 17px;
+    position: relative;
+    color: #9ca3af;
+    background: linear-gradient(
+        90deg,
+        #9ca3af 0%,
+        #9ca3af 35%,
+        #000000 45%,
+        #000000 55%,
+        #9ca3af 65%,
+        #9ca3af 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: spotlight 2s linear infinite;
+}
+
+@keyframes spotlight {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}

@@ -1,0 +1,58 @@
+.chat-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+}
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 16px;
+    overflow-y: auto;
+    gap: 12px;
+    height: calc(100% - 150px);
+    align-items: stretch;
+    margin-bottom: 150px;
+    font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica,
+        Apple Color Emoji, Arial, sans-serif, Segoe UI Emoji, Segoe UI Symbol;
+}
+
+.input-container.centered {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 13px; /* Space between title and chat box */
+}
+
+.input-container.bottom-fixed {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    width: auto;
+}
+
+.options-button-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+.options-button {
+    color: rgb(93 93 93);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.options-button:hover {
+    color: rgb(151 151 151);
+}
