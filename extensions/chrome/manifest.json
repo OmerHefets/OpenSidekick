@@ -27,6 +27,7 @@
         "service_worker": "dist/background.bundle.js",
         "type": "module"
     },
+    "host_permissions": ["<all_urls>"],
     "permissions": ["storage", "sidePanel", "debugger", "activeTab"],
     "side_panel": {
         "default_path": "dist/sidebar.html"
