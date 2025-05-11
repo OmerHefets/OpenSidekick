@@ -9,7 +9,6 @@ import "./ChatApp.css";
 import CopilotDoneMessage from "./CopilotDoneMessage";
 import CopilotWaitMessage from "./CopilotWaitMessage";
 import { mapActionToTitle } from "../utils/actionResponseHandler";
-import EnvironmentHandler from "./environmentHandler";
 import { SettingsSvg } from "./icons/SettingsIcon";
 
 const ChatApp = () => {
@@ -19,7 +18,6 @@ const ChatApp = () => {
     const [messages, setMessages] = useState([]);
     const [isCopilotMode, setIsCopilotMode] = useState(true);
     const messagesEndRef = useRef(null);
-    const environmentHandler = useRef(null);
 
     console.log("[ChatApp] Component initialized");
 
@@ -39,14 +37,6 @@ const ChatApp = () => {
 
     useEffect(() => {
         console.log("[ChatApp] Running initialization effect");
-
-        // Initialize EnvironmentHandler once when component mounts
-        if (!environmentHandler.current) {
-            console.log("[ChatApp] Creating new EnvironmentHandler instance");
-            environmentHandler.current = new EnvironmentHandler();
-            environmentHandler.current.initialize();
-            console.log("[ChatApp] EnvironmentHandler initialized");
-        }
 
         chrome.runtime.sendMessage({ type: "PANEL_OPENED" }, (response) => {
             console.log("[ChatApp] Panel open notification sent:", response);

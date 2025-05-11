@@ -39,9 +39,7 @@ export class EnvironmentManager {
         console.log("[EnvironmentManager] Taking screenshot");
 
         try {
-            // Request screenshot via communications
-            const base64Screenshot =
-                await this.communications.requestScreenshot();
+            const base64Screenshot = await this.captureScreenshot();
 
             // Process the screenshot
             const processedScreenshot = await this.processScreenshot(
@@ -51,6 +49,96 @@ export class EnvironmentManager {
             return processedScreenshot;
         } catch (error) {
             console.error("[EnvironmentManager] Screenshot error:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Take a screenshot of the visible tab area with simple retry mechanism
+     * @returns {Promise<string>} Base64-encoded image data (without the prefix)
+     */
+    async captureScreenshot() {
+        const maxRetries = 5;
+        const retryDelay = 500; // 0.5 seconds
+
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                // If not the first attempt, wait before retrying
+                if (attempt > 0) {
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, retryDelay)
+                    );
+                    console.log(
+                        `Screenshot attempt ${attempt + 1} of ${maxRetries}...`
+                    );
+                }
+
+                const dataUrl = await chrome.tabs.captureVisibleTab(null, {
+                    format: "png",
+                });
+
+                // Convert dataUrl to base64 data only (remove the prefix)
+                const base64Data = dataUrl.replace(
+                    /^data:image\/png;base64,/,
+                    ""
+                );
+
+                return await this.scaleImage(base64Data);
+            } catch (error) {
+                if (attempt === maxRetries - 1) {
+                    console.error(
+                        `Screenshot failed after ${maxRetries} attempts:`,
+                        error
+                    );
+                    throw error;
+                } else {
+                    console.warn(
+                        `Screenshot attempt ${attempt + 1} failed, retrying...`,
+                        error
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * Scale an image according to the device pixel ratio without using Image object
+     * @param {string} base64Data - Base64-encoded image data
+     * @returns {Promise<string>} Scaled base64-encoded image data
+     */
+    async scaleImage(base64Data) {
+        try {
+            const dpr = await this.communications.getDPR();
+            console.log("[EnvHandler] DPR ratio:", dpr);
+
+            const binaryString = atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            const blob = new Blob([bytes], { type: "image/png" });
+
+            const imageBitmap = await createImageBitmap(blob);
+
+            const canvas = new OffscreenCanvas(
+                imageBitmap.width / dpr,
+                imageBitmap.height / dpr
+            );
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+
+            const scaledBlob = await canvas.convertToBlob({
+                type: "image/png",
+            });
+            const scaledBase64 = await this.blobToBase64(scaledBlob);
+
+            return scaledBase64.replace(/^data:image\/png;base64,/, "");
+        } catch (error) {
+            console.error("[EnvironmentManager] Error scaling image:", error);
             throw error;
         }
     }

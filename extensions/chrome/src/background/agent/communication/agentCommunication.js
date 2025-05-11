@@ -37,41 +37,61 @@ export class Communications {
     }
 
     /**
-     * Request a screenshot from the environment
-     * @returns {Promise<Object>} The screenshot data
+     * Get the Device Pixel Ratio from the active tab
+     * @returns {Promise<number>} The device pixel ratio
      */
-    requestScreenshot() {
-        console.log("[Communications] Requesting screenshot");
+    async getDPR() {
+        console.log("[Communications] Request DPR from content script");
 
-        return new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage(
-                {
-                    type: "SCREENSHOT",
-                },
-                (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.log(
-                            `[Communications] Screenshot request failed: ${chrome.runtime.lastError.message}`
-                        );
-                        reject(chrome.runtime.lastError);
-                        return;
-                    }
+        return new Promise((resolve) => {
+            try {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    (tabs) => {
+                        if (!tabs || !tabs[0] || !tabs[0].id) {
+                            console.warn(
+                                "[Communications] No active tab found, using default DPR of 1.25"
+                            );
+                            resolve(1.25);
+                            return;
+                        }
 
-                    if (response && response.success) {
-                        console.log(
-                            `[Communications] Screenshot request successful`
+                        chrome.tabs.sendMessage(
+                            tabs[0].id,
+                            { type: "GET_DPR" },
+                            (response) => {
+                                if (chrome.runtime.lastError) {
+                                    console.warn(
+                                        "[Communications] Error getting DPR:",
+                                        chrome.runtime.lastError
+                                    );
+                                    resolve(1.25);
+                                    return;
+                                }
+
+                                if (
+                                    response &&
+                                    typeof response.dpr === "number"
+                                ) {
+                                    console.log(
+                                        "[Communications] Retrieved DPR:",
+                                        response.dpr
+                                    );
+                                    resolve(response.dpr);
+                                } else {
+                                    console.warn(
+                                        "[Communications] Invalid DPR response, using default 1.0"
+                                    );
+                                    resolve(1.25);
+                                }
+                            }
                         );
-                        resolve(response.screenData);
-                    } else {
-                        console.log(
-                            `[Communications] Screenshot request failed: ${
-                                response?.error || "Unknown error"
-                            }`
-                        );
-                        reject(response?.error || "Screenshot failed");
                     }
-                }
-            );
+                );
+            } catch (error) {
+                console.error("[Communications] Error in getDPR:", error);
+                resolve(1.25);
+            }
         });
     }
 

@@ -1,4 +1,5 @@
 import CopilotElementsHandler from "./copilotElementsHandler";
+import { EnvironmentDataHandler } from "./EnvironmentDataHandler";
 
 /**
  * Manager class for the Copilot mode functionality
@@ -6,8 +7,9 @@ import CopilotElementsHandler from "./copilotElementsHandler";
  */
 class CopilotManager {
     constructor() {
-        // Initialize the CopilotElementsHandler
+        // Initialize helper classes
         this.elementsHandler = new CopilotElementsHandler();
+        this.envDataHandler = new EnvironmentDataHandler();
 
         // Active marker ID - only one marker should be active at a time
         this.activeMarkerId = null;
