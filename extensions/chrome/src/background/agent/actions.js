@@ -163,6 +163,7 @@ export class ActionHandler {
 
         if (!(processedAction.name === "screenshot")) {
             await this.communications.sendCopilotCue(processedAction);
+            await this.delay(SCREENSHOT_DELAY_MS);
         }
 
         result = await this.envManager.getScreenshot();
