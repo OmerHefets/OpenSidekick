@@ -7,12 +7,10 @@ export class DebuggerHandler {
         this.isProcessingAction = false;
 
         // Bind methods to maintain 'this' context
-        this.handleTabUpdated = this.handleTabUpdated.bind(this);
         this.handleTabActivated = this.handleTabActivated.bind(this);
         this.handleDebuggerDetached = this.handleDebuggerDetached.bind(this);
 
         // Add event listeners
-        chrome.tabs.onUpdated.addListener(this.handleTabUpdated);
         chrome.tabs.onActivated.addListener(this.handleTabActivated);
         chrome.debugger.onDetach.addListener(this.handleDebuggerDetached);
     }
@@ -34,7 +32,6 @@ export class DebuggerHandler {
         }
 
         // Remove event listeners
-        chrome.tabs.onUpdated.removeListener(this.handleTabUpdated);
         chrome.tabs.onActivated.removeListener(this.handleTabActivated);
         chrome.debugger.onDetach.removeListener(this.handleDebuggerDetached);
 
@@ -135,37 +132,6 @@ export class DebuggerHandler {
                 resolve(true);
             });
         });
-    }
-
-    // Handle tab updates (for navigation)
-    async handleTabUpdated(tabId, changeInfo, tab) {
-        // Only care about our tab
-        if (tabId !== this.tabId) return;
-
-        console.log(`Tab ${tabId} updated. Status: ${changeInfo.status}`);
-
-        // If page is loading, debugger will detach automatically
-        if (changeInfo.status === "loading") {
-            console.log("Page is loading, marking debugger as detached");
-            this.isAttached = false;
-        }
-
-        // When page completes loading, reattach debugger
-        if (changeInfo.status === "complete") {
-            console.log("Page load complete, reattaching debugger");
-            // Add a small delay to ensure the page is fully ready
-            setTimeout(async () => {
-                const success = await this.attachDebugger();
-                console.log(
-                    `Debugger reattachment ${success ? "successful" : "failed"}`
-                );
-
-                // If reattachment failed, try again with a slightly longer delay
-                if (!success) {
-                    setTimeout(() => this.attachDebugger(), 500);
-                }
-            }, 100);
-        }
     }
 
     // Handle tab activation changes

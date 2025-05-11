@@ -73,9 +73,6 @@ class CopilotManager {
             this.actionInProgress = true;
 
             this.processCopilotCue(message);
-
-            // Indicate that the response will be sent asynchronously
-            return true;
         }
 
         if (message.type === "AUTOPILOT_CUE") {
