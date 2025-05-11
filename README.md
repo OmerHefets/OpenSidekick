@@ -27,7 +27,6 @@ Get real-time, on-screen help with:
 
 ### 🚧 Known Issues
 
-❌ Can’t navigate between pages  
 ❌ Requires frequent resets between runs  
 🔥 Fixes are actively in progress!
 
