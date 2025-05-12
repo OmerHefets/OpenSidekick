@@ -2,7 +2,6 @@ export class DebuggerHandler {
     constructor() {
         this.tabId = null;
         this.isAttached = false;
-        this.attachmentQueue = [];
         this.actionQueue = [];
         this.isProcessingAction = false;
 
@@ -15,13 +14,11 @@ export class DebuggerHandler {
         chrome.debugger.onDetach.addListener(this.handleDebuggerDetached);
     }
 
-    // Initialize with a tab ID
     async initialize(tabId) {
         this.tabId = tabId;
         await this.attachDebugger();
     }
 
-    // Clean up resources
     async cleanup() {
         if (this.isAttached) {
             try {
@@ -38,12 +35,10 @@ export class DebuggerHandler {
         // Clear state
         this.tabId = null;
         this.isAttached = false;
-        this.attachmentQueue = [];
         this.actionQueue = [];
         this.isProcessingAction = false;
     }
 
-    // Improved attach debugger method with retries
     async attachDebugger(retryCount = 3) {
         if (!this.tabId) {
             console.error("No tab ID provided");
@@ -52,7 +47,7 @@ export class DebuggerHandler {
 
         if (this.isAttached) {
             console.log("Debugger already attached");
-            return true; // Already attached
+            return true;
         }
 
         return new Promise((resolve) => {
@@ -68,7 +63,6 @@ export class DebuggerHandler {
                             chrome.runtime.lastError
                         );
 
-                        // Retry logic
                         if (retriesLeft > 0) {
                             console.log(
                                 `Retrying attachment in 1 second. Retries left: ${
@@ -88,26 +82,11 @@ export class DebuggerHandler {
 
                     console.log("Debugger successfully attached");
                     this.isAttached = true;
-
-                    // Process next attachment in queue if any
-                    this.attachmentQueue.shift(); // Remove current attempt
-                    if (this.attachmentQueue.length > 0) {
-                        const nextAttach = this.attachmentQueue[0];
-                        nextAttach();
-                    }
-
                     resolve(true);
                 });
             };
 
-            // Queue attachment if already in progress
-            if (this.attachmentQueue.length > 0) {
-                console.log("Adding attachment attempt to queue");
-                this.attachmentQueue.push(() => attemptAttach(retryCount));
-            } else {
-                this.attachmentQueue.push(() => {}); // Placeholder for current attempt
-                attemptAttach(retryCount);
-            }
+            attemptAttach(retryCount);
         });
     }
 
@@ -164,55 +143,6 @@ export class DebuggerHandler {
         }
     }
 
-    // New method to verify and fix debugger state
-    async verifyDebuggerState() {
-        // First check if our internal state matches reality
-        return new Promise((resolve) => {
-            if (!this.tabId) {
-                console.error("No tab ID to verify");
-                resolve(false);
-                return;
-            }
-
-            // Check if the debugger is actually attached according to Chrome
-            chrome.debugger.getTargets((targets) => {
-                const ourTabTarget = targets.find(
-                    (target) =>
-                        target.tabId === this.tabId && target.attached === true
-                );
-
-                // If our internal state doesn't match reality
-                if (this.isAttached !== Boolean(ourTabTarget)) {
-                    console.warn(
-                        `Debugger state mismatch! Internal: ${
-                            this.isAttached
-                        }, Chrome: ${Boolean(ourTabTarget)}`
-                    );
-
-                    // Update our internal state
-                    this.isAttached = Boolean(ourTabTarget);
-
-                    // If we think it's attached but Chrome says it's not, reattach
-                    if (!this.isAttached) {
-                        console.log(
-                            "Reattaching debugger due to state mismatch"
-                        );
-                        this.attachDebugger()
-                            .then((success) => resolve(success))
-                            .catch((err) => {
-                                console.error("Error reattaching:", err);
-                                resolve(false);
-                            });
-                        return;
-                    }
-                }
-
-                resolve(this.isAttached);
-            });
-        });
-    }
-
-    // Improved command execution with robust attachment check
     async executeCommand(method, params = {}, retryCount = 2) {
         // Always verify attachment status before executing any command
         console.log("TabId", this.tabId);
