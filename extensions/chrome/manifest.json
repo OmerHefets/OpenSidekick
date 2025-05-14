@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Adam & Eve - Your OpenSidekicks",
     "description": "A browser-based AI sidekick",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "icons": {
         "128": "images/icon128.png",
         "512": "images/icon512.png"

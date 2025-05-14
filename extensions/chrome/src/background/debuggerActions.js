@@ -22,6 +22,16 @@ export class DebuggerHandler {
 
     async initialize(tabId) {
         this.tabId = tabId;
+
+        if (!this.tabId) {
+            const isTabValid = await this.ensureValidTabId();
+            if (!isTabValid) {
+                throw new Error(
+                    "Failed to obtain valid tab ID during initialization"
+                );
+            }
+        }
+
         await this.attachDebugger();
     }
 
@@ -146,7 +156,63 @@ export class DebuggerHandler {
         }
     }
 
+    async ensureValidTabId() {
+        if (!this.tabId) {
+            console.log("No tabId found, fetching active tab");
+            try {
+                const [activeTab] = await chrome.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                });
+                if (activeTab) {
+                    this.tabId = activeTab.id;
+                    console.log(`Retrieved active tabId: ${this.tabId}`);
+                    return true;
+                } else {
+                    console.error("No active tab found");
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error getting active tab:", error);
+                return false;
+            }
+        }
+
+        try {
+            await chrome.tabs.get(this.tabId);
+            return true; // Tab exists and is valid
+        } catch (error) {
+            console.log(
+                `TabId ${this.tabId} is no longer valid, fetching new active tab`
+            );
+            try {
+                const [activeTab] = await chrome.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                });
+                if (activeTab) {
+                    this.tabId = activeTab.id;
+                    console.log(`Updated to new tabId: ${this.tabId}`);
+                    return true;
+                } else {
+                    console.error("No active tab found");
+                    return false;
+                }
+            } catch (queryError) {
+                console.error("Error getting active tab:", queryError);
+                return false;
+            }
+        }
+    }
+
     async executeCommand(method, params = {}, retryCount = 2) {
+        const isTabValid = await this.ensureValidTabId();
+        if (!isTabValid) {
+            throw new Error(
+                "Failed to obtain valid tab ID for command execution"
+            );
+        }
+
         // Always verify attachment status before executing any command
         console.log("TabId", this.tabId);
         if (!this.isAttached || !this.tabId) {
@@ -221,6 +287,13 @@ export class DebuggerHandler {
 
     // Queue actions to prevent conflicts
     async queueAction(actionFn) {
+        const isTabValid = await this.ensureValidTabId();
+        if (!isTabValid) {
+            return Promise.reject(
+                new Error("Invalid tab ID for action execution")
+            );
+        }
+
         return new Promise((resolve, reject) => {
             const executeAction = async () => {
                 try {
