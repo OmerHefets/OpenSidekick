@@ -1,5 +1,11 @@
+import { state } from "./agent/state";
+
 export class DebuggerHandler {
     constructor() {
+        if (state.debuggerHandler) {
+            return state.debuggerHandler;
+        }
+
         this.tabId = null;
         this.isAttached = false;
         this.actionQueue = [];
@@ -90,7 +96,6 @@ export class DebuggerHandler {
         });
     }
 
-    // Detach debugger
     async detachDebugger() {
         if (!this.isAttached || !this.tabId) {
             return true; // Nothing to detach
@@ -113,7 +118,6 @@ export class DebuggerHandler {
         });
     }
 
-    // Handle tab activation changes
     async handleTabActivated(activeInfo) {
         // Update our tracked tab ID
         if (this.tabId !== activeInfo.tabId) {
@@ -130,7 +134,6 @@ export class DebuggerHandler {
         }
     }
 
-    // Handle debugger detachment events
     handleDebuggerDetached(source, reason) {
         if (source.tabId === this.tabId) {
             this.isAttached = false;
@@ -993,4 +996,11 @@ export class DebuggerHandler {
             }
         });
     }
+}
+
+export function getDebuggerInstance() {
+    if (!state.debuggerHandler) {
+        state.debuggerHandler = new DebuggerHandler();
+    }
+    return state.debuggerHandler;
 }

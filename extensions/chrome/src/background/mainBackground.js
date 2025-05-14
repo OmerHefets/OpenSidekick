@@ -1,5 +1,5 @@
 import { state } from "./agent/state.js";
-import { DebuggerHandler } from "./debuggerActions.js";
+import { DebuggerHandler, getDebuggerInstance } from "./debuggerActions.js";
 import { setupAgentMessageListeners } from "./agent/communication/agentListeners.js";
 
 // Init agent listeners
@@ -53,7 +53,7 @@ export function initializeDebuggerHandler() {
 
     console.log("Initializing debugger handler");
 
-    state.debuggerHandler = new DebuggerHandler();
+    state.debuggerHandler = getDebuggerInstance();
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs && tabs[0]) {

@@ -2,6 +2,7 @@ import { EnvironmentManager } from "./environmentManager";
 import { Communications } from "./communication/agentCommunication";
 import { state } from "./state";
 import { initializeDebuggerHandler } from "../mainBackground";
+import { getDebuggerInstance } from "../debuggerActions";
 
 // Constants for result types
 export const RESULT_SCREENSHOT = "screenshot";
@@ -353,11 +354,7 @@ export class ActionHandler {
 
             if (!this.debuggerHandler) {
                 console.log("[ActionHandler] Initializing debugger handler");
-                initializeDebuggerHandler();
-
-                await this.delay(500);
-
-                this.debuggerHandler = state.debuggerHandler;
+                this.debuggerHandler = getDebuggerInstance();
 
                 if (!this.debuggerHandler) {
                     console.error(
@@ -365,8 +362,41 @@ export class ActionHandler {
                     );
                     return false;
                 }
+
+                await this.initializeWithActiveTab();
             }
         }
         return true;
+    }
+
+    async initializeWithActiveTab() {
+        return new Promise((resolve) => {
+            chrome.tabs.query(
+                { active: true, currentWindow: true },
+                async (tabs) => {
+                    if (tabs && tabs[0]) {
+                        try {
+                            await this.debuggerHandler.initialize(tabs[0].id);
+                            console.log(
+                                "[ActionHandler] Debugger initialized with tab:",
+                                tabs[0].id
+                            );
+                            resolve(true);
+                        } catch (error) {
+                            console.error(
+                                "[ActionHandler] Failed to initialize debugger:",
+                                error
+                            );
+                            resolve(false);
+                        }
+                    } else {
+                        console.error(
+                            "[ActionHandler] No active tab found for initialization"
+                        );
+                        resolve(false);
+                    }
+                }
+            );
+        });
     }
 }
