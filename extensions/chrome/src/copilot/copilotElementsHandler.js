@@ -11,7 +11,7 @@ class CopilotElementsHandler {
     constructor() {
         // Create a container for all copilot elements
         this.container = document.createElement("div");
-        this.container.id = "copilot-elements-container";
+        this.container.id = "opensidekick-elements-container";
         this.container.style.position = "absolute";
         this.container.style.top = "0";
         this.container.style.left = "0";
