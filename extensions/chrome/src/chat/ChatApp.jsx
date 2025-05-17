@@ -10,6 +10,7 @@ import CopilotDoneMessage from "./CopilotDoneMessage";
 import CopilotWaitMessage from "./CopilotWaitMessage";
 import { mapActionToTitle } from "../utils/actionResponseHandler";
 import { SettingsSvg } from "./icons/SettingsIcon";
+import ErrorMessage from "./ErrorMessage";
 
 const ChatApp = () => {
     const [initializedChat, setInitializedChat] = useState(false);
@@ -163,6 +164,10 @@ const ChatApp = () => {
                 console.log("[ChatApp] Processing finish run message");
                 setIsOperating(false);
                 console.log("[ChatApp] Set operating: false");
+            } else if (message.type === "ERROR_RESPONSE") {
+                console.log("[ChatApp] Error message received, cancel run");
+                setMessages((prev) => [...prev, { type: "error" }]);
+                handleStopOperation();
             }
         };
 
@@ -267,6 +272,8 @@ const ChatApp = () => {
                                 content={msg.content}
                             />
                         );
+                    } else if (msg.type === "error") {
+                        return <ErrorMessage key={index} />;
                     }
                     return null;
                 })}
