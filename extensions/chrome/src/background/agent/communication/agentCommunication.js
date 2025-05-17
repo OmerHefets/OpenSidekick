@@ -37,6 +37,16 @@ export class Communications {
     }
 
     /**
+     * Signal that the current run has finished
+     */
+    errorMessage() {
+        console.log("[Communications] Sending error message");
+        chrome.runtime.sendMessage({
+            type: "ERROR_RESPONSE",
+        });
+    }
+
+    /**
      * Get the Device Pixel Ratio from the active tab
      * @returns {Promise<number>} The device pixel ratio
      */
