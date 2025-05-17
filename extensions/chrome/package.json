@@ -1,6 +1,6 @@
 {
     "name": "opensidekick",
-    "version": "0.0.7",
+    "version": "0.0.10",
     "description": "A browser-based AI sidekick",
     "main": "index.js",
     "scripts": {
