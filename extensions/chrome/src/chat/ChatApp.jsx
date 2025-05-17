@@ -272,6 +272,8 @@ const ChatApp = () => {
                                 content={msg.content}
                             />
                         );
+                    } else if (msg.type === "error") {
+                        return <ErrorMessage key={index} />;
                     }
                     return null;
                 })}

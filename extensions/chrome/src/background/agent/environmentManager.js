@@ -49,6 +49,7 @@ export class EnvironmentManager {
             return processedScreenshot;
         } catch (error) {
             console.error("[EnvironmentManager] Screenshot error:", error);
+            this.communications.errorMessage();
             throw error;
         }
     }

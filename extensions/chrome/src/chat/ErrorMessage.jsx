@@ -1,9 +1,8 @@
 import React from "react";
 import "./ErrorMessage.css";
 import InfoSvg from "./icons/InfoIcon";
-import { ResetSvg } from "./icons/ResetIcon";
 
-const ErrorMessage = ({ onReset }) => {
+const ErrorMessage = () => {
     return (
         <div className="error-box">
             <div className="error-content">
@@ -17,11 +16,6 @@ const ErrorMessage = ({ onReset }) => {
                     center at help.openai.com.
                 </div>
             </div>
-
-            <button onClick={onReset} className="reset-button">
-                <ResetSvg />
-                Reset
-            </button>
         </div>
     );
 };
