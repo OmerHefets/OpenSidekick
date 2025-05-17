@@ -10,10 +10,8 @@ const ErrorMessage = () => {
                     <InfoSvg />
                 </div>
                 <div className="error-text">
-                    An error occurred. Either the engine you requested does not
-                    exist or there was another issue processing your request. If
-                    this issue persists please contact us through our help
-                    center at help.openai.com.
+                    An error occurred. Close the side panel and reopen it in a
+                    new tab.
                 </div>
             </div>
         </div>
