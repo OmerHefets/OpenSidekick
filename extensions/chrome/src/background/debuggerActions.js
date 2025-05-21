@@ -62,32 +62,47 @@ export class DebuggerHandler {
         }
 
         if (this.isAttached) {
-            console.log("Debugger already attached");
-            return true;
+            try {
+                await this.executeCommand("Runtime.evaluate", {
+                    expression: "1+1",
+                });
+                console.log("Debugger attachment verified");
+                return true;
+            } catch (error) {
+                console.warn(
+                    "Debugger says attached but command failed, resetting state:",
+                    error
+                );
+                this.isAttached = false;
+            }
         }
 
         return new Promise((resolve) => {
+            let attemptCount = 0;
+
             const attemptAttach = (retriesLeft) => {
+                attemptCount++;
+
+                const backoffDelay = this.calculateBackoffDelay(attemptCount);
+
                 console.log(
-                    `Attempting to attach debugger to tab ${this.tabId}, retries left: ${retriesLeft}`
+                    `Attempting to attach debugger to tab ${this.tabId}, attempt ${attemptCount}, retries left: ${retriesLeft}, backoff: ${backoffDelay}ms`
                 );
 
                 chrome.debugger.attach({ tabId: this.tabId }, "1.3", () => {
                     if (chrome.runtime.lastError) {
-                        console.error(
-                            "Attachment failed:",
-                            chrome.runtime.lastError
-                        );
+                        const error = chrome.runtime.lastError.message;
+                        console.error("Attachment failed:", error);
 
                         if (retriesLeft > 0) {
                             console.log(
-                                `Retrying attachment in 1 second. Retries left: ${
+                                `Retrying attachment in ${backoffDelay}ms. Retries left: ${
                                     retriesLeft - 1
                                 }`
                             );
                             setTimeout(
                                 () => attemptAttach(retriesLeft - 1),
-                                1000
+                                backoffDelay
                             );
                         } else {
                             console.error("All attachment attempts failed");
@@ -98,7 +113,31 @@ export class DebuggerHandler {
 
                     console.log("Debugger successfully attached");
                     this.isAttached = true;
-                    resolve(true);
+
+                    this.executeCommand("Runtime.evaluate", {
+                        expression: "1+1",
+                    })
+                        .then(() => {
+                            console.log(
+                                "Debugger attachment verified with test command"
+                            );
+                            resolve(true);
+                        })
+                        .catch((cmdError) => {
+                            console.error(
+                                "Attachment succeeded but test command failed:",
+                                cmdError
+                            );
+                            this.isAttached = false;
+                            if (retriesLeft > 0) {
+                                setTimeout(
+                                    () => attemptAttach(retriesLeft - 1),
+                                    backoffDelay
+                                );
+                            } else {
+                                resolve(false);
+                            }
+                        });
                 });
             };
 
@@ -156,79 +195,59 @@ export class DebuggerHandler {
         }
     }
 
-    async ensureValidTabId() {
-        if (!this.tabId) {
-            console.log("No tabId found, fetching active tab");
-            try {
-                const [activeTab] = await chrome.tabs.query({
-                    active: true,
-                    currentWindow: true,
-                });
-                if (activeTab) {
-                    this.tabId = activeTab.id;
-                    console.log(`Retrieved active tabId: ${this.tabId}`);
-                    return true;
-                } else {
-                    console.error("No active tab found");
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error getting active tab:", error);
-                return false;
-            }
-        }
-
-        try {
-            await chrome.tabs.get(this.tabId);
-            return true; // Tab exists and is valid
-        } catch (error) {
-            console.log(
-                `TabId ${this.tabId} is no longer valid, fetching new active tab`
-            );
-            try {
-                const [activeTab] = await chrome.tabs.query({
-                    active: true,
-                    currentWindow: true,
-                });
-                if (activeTab) {
-                    this.tabId = activeTab.id;
-                    console.log(`Updated to new tabId: ${this.tabId}`);
-                    return true;
-                } else {
-                    console.error("No active tab found");
-                    return false;
-                }
-            } catch (queryError) {
-                console.error("Error getting active tab:", queryError);
-                return false;
-            }
-        }
-    }
-
     async executeCommand(method, params = {}, retryCount = 2) {
+        const startTime = Date.now();
+        let succeeded = false;
+
+        // Track command execution for debugging
+        const commandId = Math.random().toString(36).substring(2, 8);
+        console.log(`[${commandId}] Executing command: ${method}`, params);
+
         const isTabValid = await this.ensureValidTabId();
         if (!isTabValid) {
-            throw new Error(
+            const error = new Error(
                 "Failed to obtain valid tab ID for command execution"
             );
+            console.error(`[${commandId}] Command failed:`, error);
+            this.logCommandStats(method, startTime, false, error.message);
+            throw error;
         }
 
         // Always verify attachment status before executing any command
-        console.log("TabId", this.tabId);
         if (!this.isAttached || !this.tabId) {
             console.log(
-                "Debugger not attached, attempting to attach before command execution"
+                `[${commandId}] Debugger not attached, attempting to attach before command execution`
             );
             const attached = await this.attachDebugger();
             if (!attached) {
-                throw new Error(
+                const error = new Error(
                     "Failed to attach debugger for command execution"
                 );
+                console.error(`[${commandId}] Command failed:`, error);
+                this.logCommandStats(method, startTime, false, error.message);
+                throw error;
             }
         }
 
         return new Promise((resolve, reject) => {
-            const executeWithRetry = (retriesLeft) => {
+            const executeWithRetry = (retriesLeft, lastError = null) => {
+                // If we have a previous error and are retrying, log it
+                if (lastError) {
+                    console.warn(
+                        `[${commandId}] Retry after error:`,
+                        lastError
+                    );
+                }
+
+                // Calculate backoff delay based on retry number (exponential with jitter)
+                const retryAttempt = retryCount - retriesLeft + 1;
+                const backoffDelay = this.calculateBackoffDelay(
+                    retryAttempt,
+                    2, // Base multiplier for commands (exponential)
+                    100, // Start with shorter delays for commands
+                    2000 // Cap at 2 seconds
+                );
+
                 chrome.debugger.sendCommand(
                     { tabId: this.tabId },
                     method,
@@ -236,35 +255,118 @@ export class DebuggerHandler {
                     (result) => {
                         if (chrome.runtime.lastError) {
                             const error = chrome.runtime.lastError.message;
-                            console.error(`Command ${method} failed:`, error);
+                            console.error(
+                                `[${commandId}] Command ${method} failed:`,
+                                error
+                            );
 
-                            // If error suggests detachment, try to reattach
+                            // Check for different types of errors for specialized handling
                             if (
                                 error.includes("Detached") ||
                                 error.includes("not attached")
                             ) {
+                                // Update our internal state to match reality
                                 this.isAttached = false;
 
-                                // Try to reattach and retry if we have retries left
+                                // Try to reattach and retry
                                 if (retriesLeft > 0) {
                                     console.log(
-                                        `Reattaching debugger and retrying command. Retries left: ${
+                                        `[${commandId}] Reattaching debugger and retrying in ${backoffDelay}ms. Retries left: ${
                                             retriesLeft - 1
                                         }`
                                     );
-                                    this.attachDebugger().then((success) => {
-                                        if (success) {
-                                            setTimeout(
-                                                () =>
-                                                    executeWithRetry(
-                                                        retriesLeft - 1
-                                                    ),
-                                                100
+
+                                    // First detach explicitly to clean up any bad state
+                                    chrome.debugger.detach(
+                                        { tabId: this.tabId },
+                                        () => {
+                                            // Attach after a brief delay
+                                            setTimeout(() => {
+                                                this.attachDebugger().then(
+                                                    (success) => {
+                                                        if (success) {
+                                                            setTimeout(
+                                                                () =>
+                                                                    executeWithRetry(
+                                                                        retriesLeft -
+                                                                            1,
+                                                                        error
+                                                                    ),
+                                                                100
+                                                            );
+                                                        } else {
+                                                            this.logCommandStats(
+                                                                method,
+                                                                startTime,
+                                                                false,
+                                                                error
+                                                            );
+                                                            reject(
+                                                                new Error(
+                                                                    `Failed to reattach debugger: ${error}`
+                                                                )
+                                                            );
+                                                        }
+                                                    }
+                                                );
+                                            }, backoffDelay);
+                                        }
+                                    );
+                                    return;
+                                }
+                            } else if (
+                                error.includes("Cannot find context") ||
+                                error.includes("Cannot access") ||
+                                error.includes("Target closed")
+                            ) {
+                                // Tab likely navigated or closed
+                                console.warn(
+                                    `[${commandId}] Tab context changed during command:`,
+                                    error
+                                );
+                                this.isAttached = false;
+
+                                // Try to get a new tab ID and reattach
+                                if (retriesLeft > 0) {
+                                    this.ensureValidTabId().then((isValid) => {
+                                        if (isValid) {
+                                            this.attachDebugger().then(
+                                                (attached) => {
+                                                    if (attached) {
+                                                        setTimeout(
+                                                            () =>
+                                                                executeWithRetry(
+                                                                    retriesLeft -
+                                                                        1,
+                                                                    error
+                                                                ),
+                                                            backoffDelay
+                                                        );
+                                                    } else {
+                                                        this.logCommandStats(
+                                                            method,
+                                                            startTime,
+                                                            false,
+                                                            error
+                                                        );
+                                                        reject(
+                                                            new Error(
+                                                                `Failed to reattach to new tab: ${error}`
+                                                            )
+                                                        );
+                                                    }
+                                                }
                                             );
                                         } else {
+                                            this.logCommandStats(
+                                                method,
+                                                startTime,
+                                                false,
+                                                error
+                                            );
                                             reject(
                                                 new Error(
-                                                    `Failed to reattach debugger: ${error}`
+                                                    `No valid tab found: ${error}`
                                                 )
                                             );
                                         }
@@ -273,9 +375,41 @@ export class DebuggerHandler {
                                 }
                             }
 
+                            // For other errors or if we're out of retries
+                            if (retriesLeft > 0) {
+                                console.log(
+                                    `[${commandId}] Retrying command in ${backoffDelay}ms. Retries left: ${
+                                        retriesLeft - 1
+                                    }`
+                                );
+                                setTimeout(
+                                    () =>
+                                        executeWithRetry(
+                                            retriesLeft - 1,
+                                            error
+                                        ),
+                                    backoffDelay
+                                );
+                                return;
+                            }
+
+                            this.logCommandStats(
+                                method,
+                                startTime,
+                                false,
+                                error
+                            );
                             reject(new Error(error));
                             return;
                         }
+
+                        // Success path
+                        succeeded = true;
+                        const duration = Date.now() - startTime;
+                        console.log(
+                            `[${commandId}] Command ${method} succeeded in ${duration}ms`
+                        );
+                        this.logCommandStats(method, startTime, true);
                         resolve(result);
                     }
                 );
@@ -283,6 +417,180 @@ export class DebuggerHandler {
 
             executeWithRetry(retryCount);
         });
+    }
+
+    logCommandStats(method, startTime, success, errorMessage = null) {
+        const duration = Date.now() - startTime;
+
+        if (!this.commandStats) {
+            this.commandStats = {
+                total: 0,
+                success: 0,
+                failure: 0,
+                byMethod: {},
+            };
+        }
+
+        this.commandStats.total++;
+        this.commandStats[success ? "success" : "failure"]++;
+
+        if (!this.commandStats.byMethod[method]) {
+            this.commandStats.byMethod[method] = {
+                total: 0,
+                success: 0,
+                failure: 0,
+                avgDuration: 0,
+                errors: [],
+            };
+        }
+
+        const methodStats = this.commandStats.byMethod[method];
+        methodStats.total++;
+        methodStats[success ? "success" : "failure"]++;
+
+        const prevTotal = methodStats.avgDuration * (methodStats.total - 1);
+        methodStats.avgDuration = (prevTotal + duration) / methodStats.total;
+
+        if (!success && errorMessage) {
+            if (methodStats.errors.length >= 10) {
+                methodStats.errors.shift();
+            }
+            methodStats.errors.push({
+                time: new Date().toISOString(),
+                duration,
+                error: errorMessage,
+            });
+        }
+
+        if (this.commandStats.total % 50 === 0) {
+            console.log(
+                "Debugger command statistics:",
+                JSON.stringify(this.commandStats, null, 2)
+            );
+        }
+    }
+
+    async ensureValidTabId() {
+        if (!this.tabId) {
+            console.log("No tabId found, fetching active tab");
+            try {
+                const tabs = await chrome.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                });
+
+                if (!tabs || tabs.length === 0) {
+                    console.error("No active tabs found");
+                    return false;
+                }
+
+                this.tabId = tabs[0].id;
+                console.log(
+                    `Retrieved active tabId: ${this.tabId}, URL: ${tabs[0].url}`
+                );
+
+                this.tabUrl = tabs[0].url;
+                return true;
+            } catch (error) {
+                console.error("Error getting active tab:", error);
+                return false;
+            }
+        }
+
+        try {
+            const tab = await chrome.tabs.get(this.tabId);
+
+            if (tab.url !== this.tabUrl) {
+                console.log(
+                    `Tab URL changed from ${this.tabUrl} to ${tab.url}`
+                );
+                this.tabUrl = tab.url;
+
+                if (
+                    this.isAttached &&
+                    this.getOrigin(tab.url) !== this.getOrigin(this.tabUrl)
+                ) {
+                    console.log(
+                        "Tab navigated to different origin, debugger may need reattachment"
+                    );
+
+                    this.attachmentNeedsVerification = true;
+                }
+            }
+
+            return true;
+        } catch (error) {
+            console.log(
+                `TabId ${this.tabId} is no longer valid, fetching new active tab`
+            );
+
+            try {
+                const tabs = await chrome.tabs.query({
+                    active: true,
+                    currentWindow: true,
+                });
+
+                if (!tabs || tabs.length === 0) {
+                    console.error("No active tabs found for replacement");
+                    this.tabId = null;
+                    this.tabUrl = null;
+                    return false;
+                }
+
+                const oldTabId = this.tabId;
+                this.tabId = tabs[0].id;
+                this.tabUrl = tabs[0].url;
+
+                console.log(
+                    `Updated from tabId ${oldTabId} to ${this.tabId}, URL: ${this.tabUrl}`
+                );
+
+                // If we had a debugger attached to the old tab, we need to reattach
+                if (this.isAttached) {
+                    console.log(
+                        "Tab changed while debugger was attached, need to reattach"
+                    );
+                    this.isAttached = false;
+                }
+
+                return true;
+            } catch (queryError) {
+                console.error(
+                    "Error getting replacement active tab:",
+                    queryError
+                );
+                this.tabId = null;
+                this.tabUrl = null;
+                return false;
+            }
+        }
+    }
+
+    getOrigin(url) {
+        try {
+            if (!url) return null;
+            const parsed = new URL(url);
+            return parsed.origin;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    calculateBackoffDelay(
+        attemptCount,
+        baseMultiplier = 1.5,
+        minDelay = 1000,
+        maxDelay = 10000,
+        jitter = true
+    ) {
+        const baseDelay = Math.min(
+            minDelay * Math.pow(baseMultiplier, attemptCount - 1),
+            maxDelay
+        );
+
+        const randomJitter = jitter ? Math.floor(Math.random() * 200) : 0;
+
+        return baseDelay + randomJitter;
     }
 
     // Queue actions to prevent conflicts
