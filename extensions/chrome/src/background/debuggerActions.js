@@ -168,16 +168,13 @@ export class DebuggerHandler {
     }
 
     async handleTabActivated(activeInfo) {
-        // Update our tracked tab ID
         if (this.tabId !== activeInfo.tabId) {
             console.log("[Debugger] Handle tab activated - detaching debugger");
-            // Detach from old tab
             if (this.isAttached) {
                 console.log("[Debugger] Debugger attached, detaching");
                 await this.detachDebugger();
             }
 
-            // Update tab ID and attach to new tab
             this.tabId = activeInfo.tabId;
             await this.attachDebugger();
         }
@@ -188,7 +185,6 @@ export class DebuggerHandler {
             this.isAttached = false;
             console.log("Debugger detached:", reason);
 
-            // Auto-reattach if not a target closed event
             if (reason !== "target_closed") {
                 this.attachDebugger().catch(console.error);
             }
@@ -199,7 +195,6 @@ export class DebuggerHandler {
         const startTime = Date.now();
         let succeeded = false;
 
-        // Track command execution for debugging
         const commandId = Math.random().toString(36).substring(2, 8);
         console.log(`[${commandId}] Executing command: ${method}`, params);
 
@@ -213,7 +208,6 @@ export class DebuggerHandler {
             throw error;
         }
 
-        // Always verify attachment status before executing any command
         if (!this.isAttached || !this.tabId) {
             console.log(
                 `[${commandId}] Debugger not attached, attempting to attach before command execution`
@@ -231,7 +225,6 @@ export class DebuggerHandler {
 
         return new Promise((resolve, reject) => {
             const executeWithRetry = (retriesLeft, lastError = null) => {
-                // If we have a previous error and are retrying, log it
                 if (lastError) {
                     console.warn(
                         `[${commandId}] Retry after error:`,
@@ -239,7 +232,6 @@ export class DebuggerHandler {
                     );
                 }
 
-                // Calculate backoff delay based on retry number (exponential with jitter)
                 const retryAttempt = retryCount - retriesLeft + 1;
                 const backoffDelay = this.calculateBackoffDelay(
                     retryAttempt,
@@ -260,15 +252,12 @@ export class DebuggerHandler {
                                 error
                             );
 
-                            // Check for different types of errors for specialized handling
                             if (
                                 error.includes("Detached") ||
                                 error.includes("not attached")
                             ) {
-                                // Update our internal state to match reality
                                 this.isAttached = false;
 
-                                // Try to reattach and retry
                                 if (retriesLeft > 0) {
                                     console.log(
                                         `[${commandId}] Reattaching debugger and retrying in ${backoffDelay}ms. Retries left: ${
@@ -276,11 +265,9 @@ export class DebuggerHandler {
                                         }`
                                     );
 
-                                    // First detach explicitly to clean up any bad state
                                     chrome.debugger.detach(
                                         { tabId: this.tabId },
                                         () => {
-                                            // Attach after a brief delay
                                             setTimeout(() => {
                                                 this.attachDebugger().then(
                                                     (success) => {
@@ -319,14 +306,12 @@ export class DebuggerHandler {
                                 error.includes("Cannot access") ||
                                 error.includes("Target closed")
                             ) {
-                                // Tab likely navigated or closed
                                 console.warn(
                                     `[${commandId}] Tab context changed during command:`,
                                     error
                                 );
                                 this.isAttached = false;
 
-                                // Try to get a new tab ID and reattach
                                 if (retriesLeft > 0) {
                                     this.ensureValidTabId().then((isValid) => {
                                         if (isValid) {
@@ -375,7 +360,6 @@ export class DebuggerHandler {
                                 }
                             }
 
-                            // For other errors or if we're out of retries
                             if (retriesLeft > 0) {
                                 console.log(
                                     `[${commandId}] Retrying command in ${backoffDelay}ms. Retries left: ${
@@ -403,7 +387,6 @@ export class DebuggerHandler {
                             return;
                         }
 
-                        // Success path
                         succeeded = true;
                         const duration = Date.now() - startTime;
                         console.log(
