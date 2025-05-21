@@ -345,6 +345,144 @@ export class ActionHandler {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    /**
+     * Ensures that the debugger is available and properly attached
+     * @returns {Promise<boolean>} True if debugger is available and ready
+     */
+    async ensureDebuggerAvailable() {
+        // Step 1: Check if debugger handler exists
+        if (!this.debuggerHandler) {
+            console.log(
+                "[ActionHandler] Debugger handler is null, attempting to initialize"
+            );
+            this.debuggerHandler = state.debuggerHandler;
+
+            // Step 2: If still null, try to get a new instance
+            if (!this.debuggerHandler) {
+                console.log("[ActionHandler] Initializing debugger handler");
+                this.debuggerHandler = getDebuggerInstance();
+
+                if (!this.debuggerHandler) {
+                    console.error(
+                        "[ActionHandler] Failed to initialize debugger handler"
+                    );
+                    return false;
+                }
+
+                // Step 3: Initialize with active tab
+                const initialized = await this.initializeWithActiveTab();
+                if (!initialized) {
+                    console.error(
+                        "[ActionHandler] Failed to initialize debugger with active tab"
+                    );
+                    return false;
+                }
+            }
+        }
+
+        // Step 4: Verify debugger is attached and operational
+        return await this.verifyDebuggerOperational();
+    }
+
+    /**
+     * New method to verify the debugger is operational by testing a simple command
+     * @returns {Promise<boolean>} True if the debugger is operational
+     */
+    async verifyDebuggerOperational() {
+        if (!this.debuggerHandler) {
+            return false;
+        }
+
+        // Check if the debugger reports it's attached
+        if (!this.debuggerHandler.isAttached) {
+            console.log(
+                "[ActionHandler] Debugger reports it's not attached, attempting to attach"
+            );
+
+            try {
+                // Try to refresh the tab ID before attempting to attach
+                const isTabValid =
+                    await this.debuggerHandler.ensureValidTabId();
+                if (!isTabValid) {
+                    console.error(
+                        "[ActionHandler] Failed to obtain a valid tab ID"
+                    );
+                    return false;
+                }
+
+                // Attempt to attach the debugger
+                const attached = await this.debuggerHandler.attachDebugger(3); // 3 retries
+                if (!attached) {
+                    console.error("[ActionHandler] Failed to attach debugger");
+                    return false;
+                }
+            } catch (error) {
+                console.error(
+                    "[ActionHandler] Error during debugger attachment:",
+                    error
+                );
+                return false;
+            }
+        }
+
+        // Verify the debugger is truly operational with a simple command
+        try {
+            await this.debuggerHandler.executeCommand("Runtime.evaluate", {
+                expression: "1+1",
+            });
+            console.log("[ActionHandler] Debugger verified operational");
+            return true;
+        } catch (error) {
+            console.error(
+                "[ActionHandler] Debugger failed operational verification:",
+                error
+            );
+
+            try {
+                console.log(
+                    "[ActionHandler] Attempting to recover debugger connection"
+                );
+
+                // First detach if we think we're attached
+                if (this.debuggerHandler.isAttached) {
+                    await this.debuggerHandler.detachDebugger();
+                }
+
+                // Refresh tab ID
+                await this.debuggerHandler.ensureValidTabId();
+
+                // Try to attach again
+                const reattached = await this.debuggerHandler.attachDebugger(2);
+                if (!reattached) {
+                    console.error(
+                        "[ActionHandler] Failed to recover debugger connection"
+                    );
+                    return false;
+                }
+
+                // Verify again after recovery
+                await this.debuggerHandler.executeCommand("Runtime.evaluate", {
+                    expression: "1+1",
+                });
+                console.log(
+                    "[ActionHandler] Debugger recovered and verified operational"
+                );
+                return true;
+            } catch (recoveryError) {
+                console.error(
+                    "[ActionHandler] Failed to recover debugger:",
+                    recoveryError
+                );
+                return false;
+            }
+        }
+    }
+
+    javascript;
+    /**
+     * Ensures that the debugger is available and properly attached
+     * @returns {Promise<boolean>} True if debugger is available and ready
+     */
     async ensureDebuggerAvailable() {
         if (!this.debuggerHandler) {
             console.log(
@@ -363,40 +501,214 @@ export class ActionHandler {
                     return false;
                 }
 
-                await this.initializeWithActiveTab();
+                const initialized = await this.initializeWithActiveTab();
+                if (!initialized) {
+                    console.error(
+                        "[ActionHandler] Failed to initialize debugger with active tab"
+                    );
+                    return false;
+                }
             }
         }
-        return true;
+
+        return await this.verifyDebuggerOperational();
     }
 
-    async initializeWithActiveTab() {
-        return new Promise((resolve) => {
-            chrome.tabs.query(
-                { active: true, currentWindow: true },
-                async (tabs) => {
-                    if (tabs && tabs[0]) {
-                        try {
-                            await this.debuggerHandler.initialize(tabs[0].id);
-                            console.log(
-                                "[ActionHandler] Debugger initialized with tab:",
-                                tabs[0].id
-                            );
-                            resolve(true);
-                        } catch (error) {
-                            console.error(
-                                "[ActionHandler] Failed to initialize debugger:",
-                                error
-                            );
-                            resolve(false);
-                        }
-                    } else {
-                        console.error(
-                            "[ActionHandler] No active tab found for initialization"
-                        );
-                        resolve(false);
-                    }
-                }
+    /**
+     * Method to verify the debugger is operational by testing a simple command
+     * @returns {Promise<boolean>} True if the debugger is operational
+     */
+    async verifyDebuggerOperational() {
+        if (!this.debuggerHandler) {
+            return false;
+        }
+
+        // Check if the debugger reports it's attached
+        if (!this.debuggerHandler.isAttached) {
+            console.log(
+                "[ActionHandler] Debugger reports it's not attached, attempting to attach"
             );
-        });
+
+            try {
+                // Try to refresh the tab ID before attempting to attach
+                const isTabValid =
+                    await this.debuggerHandler.ensureValidTabId();
+                if (!isTabValid) {
+                    console.error(
+                        "[ActionHandler] Failed to obtain a valid tab ID"
+                    );
+                    return false;
+                }
+
+                // Attempt to attach the debugger
+                const attached = await this.debuggerHandler.attachDebugger(3);
+                if (!attached) {
+                    console.error("[ActionHandler] Failed to attach debugger");
+                    return false;
+                }
+            } catch (error) {
+                console.error(
+                    "[ActionHandler] Error during debugger attachment:",
+                    error
+                );
+                return false;
+            }
+        }
+
+        // Verify the debugger is truly operational with a simple command
+        try {
+            // Run a simple test command that should always succeed if debugger is working
+            await this.debuggerHandler.executeCommand("Runtime.evaluate", {
+                expression: "1+1",
+            });
+            console.log("[ActionHandler] Debugger verified operational");
+            return true;
+        } catch (error) {
+            console.error(
+                "[ActionHandler] Debugger failed operational verification:",
+                error
+            );
+
+            // If verification failed, try to recover by forcing reattachment
+            try {
+                console.log(
+                    "[ActionHandler] Attempting to recover debugger connection"
+                );
+
+                // First detach if we think we're attached
+                if (this.debuggerHandler.isAttached) {
+                    await this.debuggerHandler.detachDebugger();
+                }
+
+                // Refresh tab ID
+                await this.debuggerHandler.ensureValidTabId();
+
+                // Try to attach again
+                const reattached = await this.debuggerHandler.attachDebugger(2);
+                if (!reattached) {
+                    console.error(
+                        "[ActionHandler] Failed to recover debugger connection"
+                    );
+                    return false;
+                }
+
+                // Verify again after recovery
+                await this.debuggerHandler.executeCommand("Runtime.evaluate", {
+                    expression: "1+1",
+                });
+                console.log(
+                    "[ActionHandler] Debugger recovered and verified operational"
+                );
+                return true;
+            } catch (recoveryError) {
+                console.error(
+                    "[ActionHandler] Failed to recover debugger:",
+                    recoveryError
+                );
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Improved method to initialize debugger with active tab
+     * @returns {Promise<boolean>} True if initialization succeeded
+     */
+    async initializeWithActiveTab() {
+        try {
+            const tabs = await new Promise((resolve) => {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    (tabs) => {
+                        resolve(tabs);
+                    }
+                );
+            });
+
+            if (!tabs || !tabs.length) {
+                console.error("[ActionHandler] No active tabs found");
+                return false;
+            }
+
+            const activeTab = tabs[0];
+
+            this.activeTabId = activeTab.id;
+            this.activeTabUrl = activeTab.url;
+            console.log(
+                `[ActionHandler] Found active tab: ${activeTab.id}, URL: ${activeTab.url}`
+            );
+
+            if (this.isUnsupportedUrl(activeTab.url)) {
+                console.warn(
+                    `[ActionHandler] Tab URL may not support debugging: ${activeTab.url}`
+                );
+                // We'll still try, but log a warning
+            }
+
+            try {
+                await this.debuggerHandler.initialize(activeTab.id);
+
+                try {
+                    await this.debuggerHandler.executeCommand(
+                        "Runtime.evaluate",
+                        {
+                            expression: "1+1",
+                        }
+                    );
+                    console.log(
+                        "[ActionHandler] Debugger successfully initialized and verified with tab:",
+                        activeTab.id
+                    );
+                    return true;
+                } catch (verifyError) {
+                    console.error(
+                        "[ActionHandler] Debugger initialized but failed verification:",
+                        verifyError
+                    );
+
+                    // Try to recover by reattaching
+                    console.log(
+                        "[ActionHandler] Attempting to reattach debugger"
+                    );
+                    await this.debuggerHandler.detachDebugger();
+                    const reattached =
+                        await this.debuggerHandler.attachDebugger(3);
+                    return reattached;
+                }
+            } catch (error) {
+                console.error(
+                    "[ActionHandler] Failed to initialize debugger:",
+                    error
+                );
+                return false;
+            }
+        } catch (error) {
+            console.error(
+                "[ActionHandler] Error during tab query or initialization:",
+                error
+            );
+            return false;
+        }
+    }
+
+    /**
+     * Helper method to check if URL is likely unsupported for debugging
+     * @param {string} url - URL to check
+     * @returns {boolean} True if URL is likely unsupported
+     */
+    isUnsupportedUrl(url) {
+        if (!url) return false;
+
+        // Check for URLs that typically don't support debugging
+        const unsupportedPatterns = [
+            /^chrome:\/\//, // Chrome internal pages
+            /^chrome-extension:\/\//, // Chrome extensions
+            /^about:/, // Browser internal pages
+            /^file:\/\//, // Local files (may have permission issues)
+            /^view-source:/, // View source pages
+            /^devtools:/, // DevTools pages
+        ];
+
+        return unsupportedPatterns.some((pattern) => pattern.test(url));
     }
 }
