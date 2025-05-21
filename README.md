@@ -85,7 +85,7 @@ npm run build
 
 <div align="center">
 <a href="https://www.youtube.com/watch?v=LS9C48c9mm8">
-  <img src="public/figma-thumbnail.png" alt="Watch the demo" width="600"/>
+  <img src="public/figma-video-thumbnail.png" alt="Watch the demo" width="600"/>
 </a>
 </div>
 
