@@ -20,7 +20,6 @@ class CopilotManager {
         // Flag to indicate if a copilot action is in progress
         this.actionInProgress = false;
 
-        // Action families classification
         this.clickActions = [
             "left_click",
             "left_click_drag",
@@ -46,7 +45,6 @@ class CopilotManager {
      * Sets up message listeners and initializes the elements handler
      */
     init() {
-        // Initialize the elements handler
         this.elementsHandler.init();
 
         // Set up message listener from background script
@@ -114,12 +112,10 @@ class CopilotManager {
 
         // Show appropriate cue based on action type
         if (this.clickActions.includes(actionName)) {
-            // For click actions, show a marker at the click coordinates
             const [x, y] = payload.coordinate;
             cueId = this.elementsHandler.insertMarker(x, y);
             console.log(`Showing marker for ${actionName} at (${x}, ${y})`);
         } else if (this.typingActions.includes(actionName)) {
-            // For typing actions, show a snackbar with typing info
             const textToShow =
                 actionName === "type"
                     ? `Typing: "${payload.text}"`
