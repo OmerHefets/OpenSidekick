@@ -11,9 +11,7 @@
 
 Tired of spending hours searching for helper articles? Watching long tutorials to figure out basic features? Endless conversations with your favorite AI model?
 
-**OpenSidekick has your back.**
-
-Get real-time, on-screen assistance with:
+Get real-time, on-screen assistance with **OpenSidekick**:
 
 -   **Copilot Mode** - learn by doing, with friendly guidance
 -   **Autopilot Mode** - let the agent take over and boost your productivity
