@@ -1,5 +1,5 @@
 import { state } from "./agent/state.js";
-import { DebuggerHandler, getDebuggerInstance } from "./debuggerActions.js";
+import { getDebuggerInstance } from "./debuggerActions.js";
 import { setupAgentMessageListeners } from "./agent/communication/agentListeners.js";
 
 // Init agent listeners
