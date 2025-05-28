@@ -57,8 +57,6 @@ export async function initializeDebuggerHandler() {
     try {
         state.debuggerHandler = getDebuggerInstance();
 
-        state.lastDebuggerInitAttempt = Date.now();
-
         const [activeTab] = await chrome.tabs.query({
             active: true,
             currentWindow: true,
@@ -68,12 +66,7 @@ export async function initializeDebuggerHandler() {
             throw new Error("No active tab found for debugger initialization");
         }
 
-        state.activeTabId = activeTab.id;
-        state.activeTabUrl = activeTab.url;
-
         await state.debuggerHandler.initialize(activeTab.id);
-
-        state.lastDebuggerInitSuccess = Date.now();
 
         console.log(
             "Debugger successfully initialized with tab:",
@@ -87,9 +80,6 @@ export async function initializeDebuggerHandler() {
         return true;
     } catch (error) {
         console.error("Failed to initialize debugger:", error);
-
-        state.lastDebuggerInitFailure = Date.now();
-        state.lastDebuggerInitError = error.message;
 
         await attemptDebuggerRecovery();
 
@@ -150,16 +140,13 @@ async function attemptDebuggerRecovery() {
             throw new Error("No active tab found during recovery");
         }
 
-        await state.debuggerHandler.initialize(activeTab.id, 5);
+        await state.debuggerHandler.initialize(activeTab.id);
 
         console.log("Debugger recovery successful");
-        state.lastDebuggerRecoverySuccess = Date.now();
 
         return true;
     } catch (error) {
         console.error("Debugger recovery failed:", error);
-        state.lastDebuggerRecoveryFailure = Date.now();
-        state.lastDebuggerRecoveryError = error.message;
 
         state.debuggerHandler = null;
 
@@ -217,9 +204,6 @@ function handleTabRemoved(tabId, removeInfo) {
     console.log("Active tab was closed:", removeInfo);
 
     cleanupDebuggerHandler(true);
-
-    state.activeTabId = null;
-    state.activeTabUrl = null;
 }
 
 export async function cleanupDebuggerHandler(force = false) {
@@ -239,8 +223,6 @@ export async function cleanupDebuggerHandler(force = false) {
         chrome.tabs.onRemoved.removeListener(handleTabRemoved);
 
         state.debuggerHandler = null;
-        state.activeTabId = null;
-        state.activeTabUrl = null;
 
         console.log("Debugger cleaned up successfully");
         return true;
